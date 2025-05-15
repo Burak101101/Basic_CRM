@@ -24,7 +24,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         router.push('/login');
       }
       
-      // If user is authenticated and trying to access login/register
+      // If user is authenticated and trying to access login/register pages
       if (isAuth && publicRoutes.includes(pathname as string)) {
         router.push('/dashboard');
       }
