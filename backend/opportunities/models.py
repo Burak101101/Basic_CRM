@@ -74,11 +74,7 @@ class Opportunity(models.Model):
         default='medium', 
         verbose_name="Öncelik"
     )
-    probability = models.PositiveSmallIntegerField(
-        default=50, 
-        verbose_name="Kazanma Olasılığı (%)",
-        help_text="Bu fırsatın kazanılma olasılığı yüzdesi (0-100)"
-    )
+
     expected_close_date = models.DateField(verbose_name="Tahmini Kapanış Tarihi")
     assigned_to = models.ForeignKey(
         User, 
@@ -109,13 +105,7 @@ class Opportunity(models.Model):
         if not self.status.is_won and not self.status.is_lost:
             self.closed_at = None
             
-        # Durum kazanıldı ise olasılığı %100 yap
-        if self.status.is_won:
-            self.probability = 100
-            
-        # Durum kaybedildi ise olasılığı %0 yap
-        if self.status.is_lost:
-            self.probability = 0
+
             
         super().save(*args, **kwargs)
 

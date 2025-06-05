@@ -22,7 +22,6 @@ export default function NewOpportunity() {
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<OpportunityCreate>({
     defaultValues: {
       priority: 'medium',
-      probability: 50,
       contacts: contactId ? [parseInt(contactId)] : []
     }
   });
@@ -256,24 +255,7 @@ export default function NewOpportunity() {
                 </select>
               </div>
 
-              <div>
-                <label htmlFor="probability" className="block text-sm font-medium text-gray-700">
-                  Kazanma Olasılığı (%)
-                </label>
-                <input
-                  type="number"
-                  id="probability"
-                  min={0}
-                  max={100}
-                  step={5}
-                  {...register('probability', {
-                    min: { value: 0, message: 'Olasılık en az 0 olmalıdır' },
-                    max: { value: 100, message: 'Olasılık en fazla 100 olmalıdır' }
-                  })}
-                  className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${errors.probability ? 'border-red-300' : ''}`}
-                />
-                {errors.probability && <p className="mt-1 text-sm text-red-600">{errors.probability.message}</p>}
-              </div>
+
             </div>
 
             <div>

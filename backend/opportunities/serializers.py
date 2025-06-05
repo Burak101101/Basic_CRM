@@ -52,8 +52,8 @@ class OpportunityListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Opportunity
-        fields = ('id', 'title', 'company', 'company_name', 'status', 'status_name', 
-                  'status_color', 'value', 'priority', 'probability', 'expected_close_date', 
+        fields = ('id', 'title', 'company', 'company_name', 'status', 'status_name',
+                  'status_color', 'value', 'priority', 'expected_close_date',
                   'assigned_to', 'assigned_to_name', 'closed_at', 'is_closed', 'contact_count')
     
     def get_assigned_to_name(self, obj):
@@ -91,13 +91,7 @@ class OpportunityCreateUpdateSerializer(serializers.ModelSerializer):
         model = Opportunity
         fields = '__all__'
         
-    def validate_probability(self, value):
-        """
-        Olasılık değerinin 0-100 arasında olduğunu doğrula
-        """
-        if not (0 <= value <= 100):
-            raise serializers.ValidationError("Olasılık değeri 0 ile 100 arasında olmalıdır.")
-        return value
+
 
 
 class OpportunityActivityCreateSerializer(serializers.ModelSerializer):

@@ -67,17 +67,35 @@ export default function NewCompany() {
             />
           </div>
 
-          <div>
-            <label htmlFor="industry" className="block text-sm font-medium text-gray-700">
-              Sektör
-            </label>
-            <input
-              type="text"
-              id="industry"
-              {...register('industry')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="Teknoloji, Perakende, Sağlık, vb."
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="industry" className="block text-sm font-medium text-gray-700">
+                Sektör
+              </label>
+              <input
+                type="text"
+                id="industry"
+                {...register('industry')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="Teknoloji, Perakende, Sağlık, vb."
+              />
+            </div>
+            <div>
+              <label htmlFor="company_size" className="block text-sm font-medium text-gray-700">
+                Firma Büyüklüğü
+              </label>
+              <select
+                id="company_size"
+                {...register('company_size')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">-- Seçiniz --</option>
+                <option value="small">Küçük (1-50 çalışan)</option>
+                <option value="medium">Orta (51-250 çalışan)</option>
+                <option value="large">Büyük (251-1000 çalışan)</option>
+                <option value="enterprise">Kurumsal (1000+ çalışan)</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -118,6 +136,33 @@ export default function NewCompany() {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Firma adresi"
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="linkedin_url" className="block text-sm font-medium text-gray-700">
+                LinkedIn URL
+              </label>
+              <input
+                type="url"
+                id="linkedin_url"
+                {...register('linkedin_url')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="https://linkedin.com/company/..."
+              />
+            </div>
+            <div>
+              <label htmlFor="website_url" className="block text-sm font-medium text-gray-700">
+                Website URL
+              </label>
+              <input
+                type="url"
+                id="website_url"
+                {...register('website_url')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="https://www.example.com"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end space-x-3 pt-5 border-t">

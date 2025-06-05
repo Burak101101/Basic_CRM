@@ -6,7 +6,9 @@ import AppWrapper from '@/components/layout/AppWrapper';
 import PageHeader from '@/components/layout/PageHeader';
 import Card from '@/components/layout/Card';
 import { getContactById, deleteContact } from '@/services/contactService';
+import { getOpportunities } from '@/services/opportunityService';
 import { Contact, Note } from '@/types/customer';
+import { OpportunityList } from '@/types/opportunities';
 import Link from 'next/link';
 import { 
   UserIcon, 
@@ -29,6 +31,7 @@ export default function ContactDetails({ params }: ContactDetailsProps) {
   const id = parseInt(params.id);
   const router = useRouter();
   const [contact, setContact] = useState<Contact | null>(null);
+  const [opportunities, setOpportunities] = useState<OpportunityList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -40,6 +43,14 @@ export default function ContactDetails({ params }: ContactDetailsProps) {
         setIsLoading(true);
         const data = await getContactById(id);
         setContact(data);
+
+        // Kişinin fırsatlarını getir
+        const opportunitiesData = await getOpportunities();
+        // Contact'ın company'si üzerinden fırsatları filtrele
+        const contactOpportunities = opportunitiesData.filter(opp =>
+          opp.company === data.company
+        );
+        setOpportunities(contactOpportunities);
       } catch (err) {
         console.error('Kişi detayları yüklenirken hata:', err);
         setError('Kişi detayları yüklenirken bir sorun oluştu.');
@@ -203,6 +214,60 @@ export default function ContactDetails({ params }: ContactDetailsProps) {
                 </dd>
               </div>
             )}
+            {contact.lead_source_display && (
+              <div className="py-3 flex items-start">
+                <dt className="w-1/3 flex items-center text-sm font-medium text-gray-500">
+                  Lead Kaynağı
+                </dt>
+                <dd className="w-2/3 text-sm text-gray-900">{contact.lead_source_display}</dd>
+              </div>
+            )}
+            {contact.lead_status_display && (
+              <div className="py-3 flex items-start">
+                <dt className="w-1/3 flex items-center text-sm font-medium text-gray-500">
+                  Lead Durumu
+                </dt>
+                <dd className="w-2/3 text-sm">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                    contact.lead_status === 'closed_won' ? 'bg-green-100 text-green-800' :
+                    contact.lead_status === 'closed_lost' ? 'bg-red-100 text-red-800' :
+                    contact.lead_status === 'qualified' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {contact.lead_status_display}
+                  </span>
+                </dd>
+              </div>
+            )}
+            {(contact.linkedin_url || contact.personal_website) && (
+              <div className="py-3 flex items-start">
+                <dt className="w-1/3 flex items-center text-sm font-medium text-gray-500">
+                  Web Linkleri
+                </dt>
+                <dd className="w-2/3 text-sm space-x-2">
+                  {contact.linkedin_url && (
+                    <a
+                      href={contact.linkedin_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    >
+                      LinkedIn
+                    </a>
+                  )}
+                  {contact.personal_website && (
+                    <a
+                      href={contact.personal_website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                    >
+                      Website
+                    </a>
+                  )}
+                </dd>
+              </div>
+            )}
             <div className="py-3 flex items-start">
               <dt className="w-1/3 flex items-center text-sm font-medium text-gray-500">
                 Ana Kişi
@@ -276,12 +341,13 @@ export default function ContactDetails({ params }: ContactDetailsProps) {
 
       {/* Fırsatlar */}
       <div className="mt-6">
-        <Card 
-          title="Satış Fırsatları"
+        <Card
+          title={`Satış Fırsatları ${opportunities.length > 0 ? `(${opportunities.length})` : ''}`}
+          subtitle={opportunities.length > 0 ? `Toplam Değer: ${opportunities.reduce((sum, opp) => sum + Number(opp.value), 0).toLocaleString('tr-TR')} TL` : undefined}
           footer={
             <div className="flex justify-end">
               <Link
-                href={`/opportunities/new?contact=${id}`}
+                href={`/opportunities/new?company=${contact?.company}&contact=${id}`}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -290,16 +356,54 @@ export default function ContactDetails({ params }: ContactDetailsProps) {
             </div>
           }
         >
-          <div className="text-center py-6">
-            <p className="text-gray-500 mb-4">Bu kişiye ait satış fırsatı bulunmuyor</p>
-            <Link 
-              href={`/opportunities/new?contact=${id}`}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-              Fırsat Ekle
-            </Link>
-          </div>
+          {opportunities.length > 0 ? (
+            <div className="space-y-4">
+              {opportunities.map((opportunity) => (
+                <Link key={opportunity.id} href={`/opportunities/${opportunity.id}`}>
+                  <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-gray-900">{opportunity.title}</h4>
+                        <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium`}
+                                style={{ backgroundColor: opportunity.status_color + '20', color: opportunity.status_color }}>
+                            {opportunity.status_name}
+                          </span>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            opportunity.priority === 'high' ? 'bg-red-100 text-red-800' :
+                            opportunity.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {opportunity.priority === 'high' ? 'Yüksek' :
+                             opportunity.priority === 'medium' ? 'Orta' : 'Düşük'} Öncelik
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-gray-900">
+                          {opportunity.value.toLocaleString('tr-TR')} TL
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Kapanış: {new Date(opportunity.expected_close_date).toLocaleDateString('tr-TR')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-gray-500 mb-4">Bu kişiye ait satış fırsatı bulunmuyor</p>
+              <Link
+                href={`/opportunities/new?company=${contact?.company}&contact=${id}`}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                Fırsat Ekle
+              </Link>
+            </div>
+          )}
         </Card>
       </div>
     </AppWrapper>

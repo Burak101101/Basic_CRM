@@ -31,7 +31,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
     queryset = Opportunity.objects.all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'description', 'company__name']
-    ordering_fields = ['created_at', 'updated_at', 'expected_close_date', 'value', 'priority', 'probability']
+    ordering_fields = ['created_at', 'updated_at', 'expected_close_date', 'value', 'priority']
     ordering = ['-created_at']
     
     def get_serializer_class(self):

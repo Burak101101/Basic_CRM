@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BuildingOfficeIcon, UserIcon, PhoneIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { BuildingOfficeIcon, PhoneIcon, EnvelopeIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 import { CompanyList } from '@/types/customer';
 
 interface CompanyCardProps {
@@ -20,7 +20,11 @@ export default function CompanyCard({ company }: CompanyCardProps) {
             </div>
             <div>
               <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600">{company.name}</h3>
-              {company.industry && <p className="text-sm text-gray-500">{company.industry}</p>}
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                {company.industry && <span>{company.industry}</span>}
+                {company.industry && company.company_size_display && <span>•</span>}
+                {company.company_size_display && <span>{company.company_size_display}</span>}
+              </div>
             </div>
           </div>
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
@@ -28,17 +32,76 @@ export default function CompanyCard({ company }: CompanyCardProps) {
           </span>
         </div>
         <div className="border-t border-gray-200">
-          <div className="grid grid-cols-2 px-4 py-3 gap-2 text-sm text-gray-600">
-            {company.email && (
-              <div className="flex items-center">
-                <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400" aria-hidden="true" />
-                <span>{company.email}</span>
+          <div className="px-4 py-3 space-y-2">
+            {/* İletişim Bilgileri */}
+            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+              {company.email && (
+                <div className="flex items-center">
+                  <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400" aria-hidden="true" />
+                  <span className="truncate">{company.email}</span>
+                </div>
+              )}
+              {company.phone && (
+                <div className="flex items-center">
+                  <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" aria-hidden="true" />
+                  <span>{company.phone}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Web Linkleri */}
+            {(company.linkedin_url || company.website_url) && (
+              <div className="flex items-center space-x-2 text-sm">
+                {company.linkedin_url && (
+                  <a
+                    href={company.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                  >
+                    LinkedIn
+                  </a>
+                )}
+                {company.website_url && (
+                  <a
+                    href={company.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                  >
+                    <GlobeAltIcon className="h-3 w-3 mr-1" />
+                    Website
+                  </a>
+                )}
               </div>
             )}
-            {company.phone && (
-              <div className="flex items-center">
-                <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" aria-hidden="true" />
-                <span>{company.phone}</span>
+
+            {/* İletişim Butonları */}
+            {(company.email || company.phone) && (
+              <div className="flex items-center space-x-2 pt-2">
+                {company.email && (
+                  <Link
+                    href={`/communications/new?company=${company.id}&email=${company.email}&name=${encodeURIComponent(company.name)}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                  >
+                    <EnvelopeIcon className="h-3 w-3 mr-1" />
+                    E-posta
+                  </Link>
+                )}
+                {company.phone && (
+                  <a
+                    href={`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                  >
+                    WhatsApp
+                  </a>
+                )}
               </div>
             )}
           </div>

@@ -16,7 +16,10 @@ class ContactSerializer(serializers.ModelSerializer):
     İletişim kişileri için serializer
     """
     notes = NoteNestedSerializer(many=True, read_only=True)
-    
+    lead_source_display = serializers.CharField(source='get_lead_source_display', read_only=True)
+    lead_status_display = serializers.CharField(source='get_lead_status_display', read_only=True)
+    company_name = serializers.CharField(source='company.name', read_only=True)
+
     class Meta:
         model = Contact
         fields = '__all__'
@@ -36,11 +39,13 @@ class CompanyListSerializer(serializers.ModelSerializer):
     Firma listesi için kısa serializer
     """
     contact_count = serializers.SerializerMethodField()
-    
+    company_size_display = serializers.CharField(source='get_company_size_display', read_only=True)
+
     class Meta:
         model = Company
-        fields = ('id', 'name', 'industry', 'phone', 'email', 'contact_count')
-    
+        fields = ('id', 'name', 'industry', 'company_size', 'company_size_display',
+                 'phone', 'email', 'linkedin_url', 'website_url', 'contact_count')
+
     def get_contact_count(self, obj):
         return obj.contacts.count()
 

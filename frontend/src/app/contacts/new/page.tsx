@@ -162,6 +162,75 @@ export default function NewContact() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="lead_source" className="block text-sm font-medium text-gray-700">
+                  Lead Kaynağı
+                </label>
+                <select
+                  id="lead_source"
+                  {...register('lead_source')}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="">-- Seçiniz --</option>
+                  <option value="linkedin">LinkedIn</option>
+                  <option value="website">Website</option>
+                  <option value="referral">Referans</option>
+                  <option value="cold_call">Soğuk Arama</option>
+                  <option value="email_campaign">E-posta Kampanyası</option>
+                  <option value="social_media">Sosyal Medya</option>
+                  <option value="trade_show">Fuar/Etkinlik</option>
+                  <option value="other">Diğer</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="lead_status" className="block text-sm font-medium text-gray-700">
+                  Lead Durumu
+                </label>
+                <select
+                  id="lead_status"
+                  {...register('lead_status')}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="lead">Lead</option>
+                  <option value="qualified">Nitelikli Lead</option>
+                  <option value="opportunity">Fırsat</option>
+                  <option value="proposal">Teklif Verildi</option>
+                  <option value="negotiation">Müzakere</option>
+                  <option value="closed_won">Kazanıldı</option>
+                  <option value="closed_lost">Kaybedildi</option>
+                  <option value="on_hold">Beklemede</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="linkedin_url" className="block text-sm font-medium text-gray-700">
+                  LinkedIn URL
+                </label>
+                <input
+                  type="url"
+                  id="linkedin_url"
+                  {...register('linkedin_url')}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="https://linkedin.com/in/..."
+                />
+              </div>
+              <div>
+                <label htmlFor="personal_website" className="block text-sm font-medium text-gray-700">
+                  Kişisel Website
+                </label>
+                <input
+                  type="url"
+                  id="personal_website"
+                  {...register('personal_website')}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="https://www.example.com"
+                />
+              </div>
+            </div>
+
             <div>
               <div className="flex items-start">
                 <div className="flex h-5 items-center">

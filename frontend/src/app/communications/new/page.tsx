@@ -11,7 +11,7 @@ import { getEmailTemplates, sendEmail, saveDraft } from '@/services/communicatio
 import { getContacts } from '@/services/contactService';
 import { getCompanies } from '@/services/companyService';
 import { Contact, CompanyList } from '@/types/customer';
-import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, XMarkIcon, PaperClipIcon, FaceSmileIcon, PhotoIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 
 export default function NewEmail() {
   const router = useRouter();
@@ -19,6 +19,8 @@ export default function NewEmail() {
   const companyId = searchParams.get('company');
   const contactId = searchParams.get('contact');
   const templateId = searchParams.get('template');
+  const emailParam = searchParams.get('email');
+  const nameParam = searchParams.get('name');
   
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<SendEmailRequest>({
     defaultValues: {
@@ -39,6 +41,8 @@ export default function NewEmail() {
   const [bccRecipients, setBccRecipients] = useState<{name?: string; email: string}[]>([]);
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [priority, setPriority] = useState<'normal' | 'high' | 'low'>('normal');
   
   const selectedTemplateId = watch('template_id');
   const selectedCompanyId = watch('company_id');
@@ -67,6 +71,12 @@ export default function NewEmail() {
             setValue('recipients', [{ name: `${contact.first_name} ${contact.last_name}`, email: contact.email }]);
           }
         }
+
+        // Eğer URL'den direkt email ve name parametreleri geldiyse
+        if (emailParam && nameParam) {
+          setRecipients([{ name: decodeURIComponent(nameParam), email: emailParam }]);
+          setValue('recipients', [{ name: decodeURIComponent(nameParam), email: emailParam }]);
+        }
         
         // Eğer URL'den şablon ID'si geldiyse
         if (templateId) {
@@ -85,7 +95,7 @@ export default function NewEmail() {
     };
 
     fetchInitialData();
-  }, [contactId, templateId, setValue]);
+  }, [contactId, templateId, emailParam, nameParam, setValue]);
   
   // Şablon değiştiğinde içeriği güncelle
   useEffect(() => {
@@ -169,6 +179,27 @@ export default function NewEmail() {
     newBccRecipients[index][field] = value;
     setBccRecipients(newBccRecipients);
     setValue('bcc', newBccRecipients);
+  };
+
+  // Attachment handling
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newAttachments = Array.from(files);
+      setAttachments(prev => [...prev, ...newAttachments]);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
   
   const onSubmit = async (data: SendEmailRequest) => {
@@ -517,37 +548,91 @@ export default function NewEmail() {
                 </div>
               )}
 
-              {/* Konu */}
-              <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
-                  Konu
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="subject"
-                    type="text"
-                    {...register('subject', { required: "Konu alanı zorunludur" })}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder="E-posta konusu"
-                  />
-                  {errors.subject && (
-                    <p className="mt-1 text-sm text-red-600">{errors.subject.message}</p>
-                  )}
+              {/* Konu ve Öncelik */}
+              <div className="flex space-x-4">
+                <div className="flex-1">
+                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+                    Konu
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="subject"
+                      type="text"
+                      {...register('subject', { required: "Konu alanı zorunludur" })}
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      placeholder="E-posta konusu"
+                    />
+                    {errors.subject && (
+                      <p className="mt-1 text-sm text-red-600">{errors.subject.message}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="w-32">
+                  <label htmlFor="priority" className="block text-sm font-medium text-gray-700">
+                    Öncelik
+                  </label>
+                  <div className="mt-1">
+                    <select
+                      id="priority"
+                      value={priority}
+                      onChange={(e) => setPriority(e.target.value as 'normal' | 'high' | 'low')}
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                      <option value="low">Düşük</option>
+                      <option value="normal">Normal</option>
+                      <option value="high">Yüksek</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              {/* İçerik */}
+              {/* İçerik - Zengin Editör */}
               <div>
-                <label htmlFor="content" className="block text-sm font-medium text-gray-700">
-                  İçerik
+                <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+                  E-posta İçeriği
                 </label>
-                <div className="mt-1">
+
+                {/* Formatting Toolbar */}
+                <div className="border border-gray-300 rounded-t-md bg-gray-50 px-3 py-2 flex items-center space-x-1 text-sm">
+                  <button type="button" className="px-3 py-1 hover:bg-gray-200 rounded font-bold text-gray-700" title="Kalın">
+                    <strong>B</strong>
+                  </button>
+                  <button type="button" className="px-3 py-1 hover:bg-gray-200 rounded italic text-gray-700" title="İtalik">
+                    <em>I</em>
+                  </button>
+                  <button type="button" className="px-3 py-1 hover:bg-gray-200 rounded underline text-gray-700" title="Altı Çizili">
+                    U
+                  </button>
+                  <div className="border-l border-gray-300 h-6 mx-2"></div>
+                  <button type="button" className="px-3 py-1 hover:bg-gray-200 rounded text-gray-700" title="Liste">
+                    • List
+                  </button>
+                  <button type="button" className="px-3 py-1 hover:bg-gray-200 rounded text-gray-700" title="Numaralı Liste">
+                    1. List
+                  </button>
+                  <div className="border-l border-gray-300 h-6 mx-2"></div>
+                  <button type="button" className="px-3 py-1 hover:bg-gray-200 rounded text-gray-700" title="Link">
+                    🔗
+                  </button>
+                  <button type="button" className="px-3 py-1 hover:bg-gray-200 rounded text-gray-700" title="Emoji">
+                    😊
+                  </button>
+                </div>
+
+                <div className="relative">
                   <textarea
                     id="content"
-                    rows={12}
+                    rows={14}
                     {...register('content', { required: "İçerik alanı zorunludur" })}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder="E-posta içeriği"
+                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-b-md border-t-0 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-none"
+                    placeholder="E-posta içeriğinizi buraya yazın...
+
+Merhaba [İsim],
+
+İyi günler dilerim.
+
+Saygılarımla,
+[Adınız]"
                   />
                   {errors.content && (
                     <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>
@@ -555,28 +640,90 @@ export default function NewEmail() {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => router.back()}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  İptal
-                </button>
-                <button
-                  type="button"
-                  onClick={saveDraftEmail}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Taslak Olarak Kaydet
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? 'Gönderiliyor...' : 'Gönder'}
-                </button>
+              {/* Attachments */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Ekler
+                  </label>
+                  <label className="cursor-pointer inline-flex items-center px-3 py-1 text-sm text-indigo-600 hover:text-indigo-900">
+                    <PaperClipIcon className="h-4 w-4 mr-1" />
+                    Dosya Ekle
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif"
+                    />
+                  </label>
+                </div>
+
+                {attachments.length > 0 && (
+                  <div className="space-y-2">
+                    {attachments.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                        <div className="flex items-center space-x-2">
+                          <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                          <span className="text-sm text-gray-900">{file.name}</span>
+                          <span className="text-xs text-gray-500">({formatFileSize(file.size)})</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Gmail benzeri alt toolbar */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div className="flex items-center space-x-4">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? 'Gönderiliyor...' : 'Gönder'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={saveDraftEmail}
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                  >
+                    Taslak Olarak Kaydet
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => router.back()}
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                  >
+                    İptal
+                  </button>
+                </div>
+
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  {priority !== 'normal' && (
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {priority === 'high' ? 'Yüksek Öncelik' : 'Düşük Öncelik'}
+                    </span>
+                  )}
+                  {attachments.length > 0 && (
+                    <span className="flex items-center">
+                      <PaperClipIcon className="h-4 w-4 mr-1" />
+                      {attachments.length} ek
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </form>

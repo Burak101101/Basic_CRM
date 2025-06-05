@@ -24,13 +24,28 @@ class CompanyAdmin(admin.ModelAdmin):
     """
     Firma admin paneli yapılandırması
     """
-    list_display = ('name', 'industry', 'phone', 'email', 'get_contacts_count')
-    list_filter = ('industry', 'created_at')
-    search_fields = ('name', 'tax_number', 'industry', 'email', 'phone')
+    list_display = ('name', 'industry', 'company_size', 'phone', 'email', 'get_contacts_count')
+    list_filter = ('industry', 'company_size', 'created_at')
+    search_fields = ('name', 'tax_number', 'industry', 'email', 'phone', 'linkedin_url', 'website_url')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [ContactInline, NoteInline]
-    inlines = [ContactInline, NoteInline]
-    
+
+    fieldsets = (
+        ('Temel Bilgiler', {
+            'fields': ('name', 'tax_number', 'industry', 'company_size')
+        }),
+        ('İletişim Bilgileri', {
+            'fields': ('phone', 'email', 'address')
+        }),
+        ('Web ve Sosyal Medya', {
+            'fields': ('linkedin_url', 'website_url', 'other_links')
+        }),
+        ('Sistem Bilgileri', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
     def get_contacts_count(self, obj):
         return obj.contacts.count()
     get_contacts_count.short_description = 'İrtibat Kişisi Sayısı'
@@ -41,13 +56,32 @@ class ContactAdmin(admin.ModelAdmin):
     """
     İletişim kişisi admin paneli yapılandırması
     """
-    list_display = ('full_name', 'company', 'position', 'phone', 'email', 'is_primary')
-    list_filter = ('company', 'is_primary', 'created_at')
-    search_fields = ('first_name', 'last_name', 'position', 'email', 'phone', 'company__name')
+    list_display = ('full_name', 'company', 'position', 'lead_status', 'lead_source', 'phone', 'email', 'is_primary')
+    list_filter = ('company', 'lead_status', 'lead_source', 'is_primary', 'created_at')
+    search_fields = ('first_name', 'last_name', 'position', 'email', 'phone', 'company__name', 'linkedin_url')
     readonly_fields = ('created_at', 'updated_at')
     list_select_related = ('company',)
     autocomplete_fields = ['company']
-    
+
+    fieldsets = (
+        ('Temel Bilgiler', {
+            'fields': ('company', 'first_name', 'last_name', 'position', 'is_primary')
+        }),
+        ('İletişim Bilgileri', {
+            'fields': ('phone', 'email')
+        }),
+        ('Lead Bilgileri', {
+            'fields': ('lead_source', 'lead_status')
+        }),
+        ('Web ve Sosyal Medya', {
+            'fields': ('linkedin_url', 'personal_website', 'other_links')
+        }),
+        ('Sistem Bilgileri', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
     def full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}"
     full_name.short_description = 'Ad Soyad'

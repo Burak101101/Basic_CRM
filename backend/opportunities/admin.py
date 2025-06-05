@@ -26,7 +26,7 @@ class OpportunityAdmin(admin.ModelAdmin):
     """
     Satış fırsatları için admin panel yapılandırması
     """
-    list_display = ('title', 'company', 'status', 'value', 'priority', 'probability', 
+    list_display = ('title', 'company', 'status', 'value', 'priority',
                     'expected_close_date', 'assigned_to', 'created_at', 'closed_at')
     list_filter = ('status', 'priority', 'created_at', 'expected_close_date', 'closed_at', 'assigned_to')
     search_fields = ('title', 'description', 'company__name')
@@ -41,7 +41,7 @@ class OpportunityAdmin(admin.ModelAdmin):
             'fields': ('contacts',)
         }),
         ('Durum ve Değer', {
-            'fields': ('status', 'value', 'priority', 'probability', 'expected_close_date')
+            'fields': ('status', 'value', 'priority', 'expected_close_date')
         }),
         ('Atama ve Tarihler', {
             'fields': ('assigned_to', 'created_at', 'updated_at', 'closed_at')

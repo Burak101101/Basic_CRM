@@ -13,7 +13,7 @@ from .serializers import (
     ContactSerializer,
     NoteSerializer
 )
-from crm_project.supabase_helpers import CustomerSupabaseService
+# from crm_project.supabase_helpers import CustomerSupabaseService
 
 
 def is_advanced_query(query):
@@ -113,9 +113,25 @@ class CompanyViewSet(viewsets.ModelViewSet):
             except ValueError:
                 limit = 50
                 
-            # Supabase ile arama
-            results = CustomerSupabaseService.search_all(query, limit=limit)
-            return Response(results)
+            # Supabase ile arama (geçici olarak devre dışı)
+            # results = CustomerSupabaseService.search_all(query, limit=limit)
+            # return Response(results)
+
+            # Geçici olarak Django ORM kullan
+            companies = Company.objects.filter(
+                Q(name__icontains=query) |
+                Q(tax_number__icontains=query) |
+                Q(industry__icontains=query) |
+                Q(email__icontains=query) |
+                Q(phone__icontains=query)
+            )
+
+            company_serializer = CompanyListSerializer(companies, many=True)
+            return Response({
+                "companies": company_serializer.data,
+                "contacts": [],
+                "status": "success"
+            })
         else:
             # Django ORM ile basit arama
             companies = Company.objects.filter(
@@ -150,16 +166,34 @@ class CompanyViewSet(viewsets.ModelViewSet):
         if industry:
             filters['industry'] = {'operator': 'ilike', 'value': f"%{industry}%"}
         
-        # Supabase ile firma listesi al
-        results = CustomerSupabaseService.get_companies(
-            search=search,
-            limit=limit,
-            offset=offset,
-            order_by=order_by,
-            filters=filters
-        )
-        
-        return Response(results)
+        # Supabase ile firma listesi al (geçici olarak devre dışı)
+        # results = CustomerSupabaseService.get_companies(
+        #     search=search,
+        #     limit=limit,
+        #     offset=offset,
+        #     order_by=order_by,
+        #     filters=filters
+        # )
+
+        # Geçici olarak Django ORM kullan
+        companies = Company.objects.all()
+        if search:
+            companies = companies.filter(
+                Q(name__icontains=search) |
+                Q(industry__icontains=search) |
+                Q(email__icontains=search)
+            )
+        if industry:
+            companies = companies.filter(industry__icontains=industry)
+
+        companies = companies[offset:offset+limit]
+        serializer = CompanyListSerializer(companies, many=True)
+
+        return Response({
+            "data": serializer.data,
+            "count": companies.count(),
+            "status": "success"
+        })
 
 
 class ContactViewSet(viewsets.ModelViewSet):
@@ -199,9 +233,14 @@ class ContactViewSet(viewsets.ModelViewSet):
         Belirli bir firmaya ait tüm iletişim kişilerini getirir
         Supabase'in direkt sorgu özelliklerini kullanır
         """
-        # Supabase ile iletişim kişilerini al
-        results = CustomerSupabaseService.get_contacts_by_company(company_id)
-        return Response(results)
+        # Supabase ile iletişim kişilerini al (geçici olarak devre dışı)
+        # results = CustomerSupabaseService.get_contacts_by_company(company_id)
+        # return Response(results)
+
+        # Geçici olarak Django ORM kullan
+        contacts = Contact.objects.filter(company_id=company_id)
+        serializer = ContactSerializer(contacts, many=True)
+        return Response(serializer.data)
 
 
 class NoteViewSet(viewsets.ModelViewSet):

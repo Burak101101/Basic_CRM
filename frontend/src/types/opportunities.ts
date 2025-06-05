@@ -38,7 +38,6 @@ export interface OpportunityList {
   status_color: string;
   value: number;
   priority: 'low' | 'medium' | 'high' | 'critical';
-  probability: number;
   expected_close_date: string;
   assigned_to: number | null;
   assigned_to_name?: string;
@@ -65,7 +64,6 @@ export interface OpportunityCreate {
   status: number;
   value: number;
   priority: 'low' | 'medium' | 'high' | 'critical';
-  probability: number;
   expected_close_date: string;
   assigned_to?: number | null;
 }
