@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import EmailTemplate, EmailMessage, EmailConfig
+from .models import EmailTemplate, EmailMessage, IncomingEmail
 
 
 @admin.register(EmailTemplate)
@@ -53,26 +53,45 @@ class EmailMessageAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(EmailConfig)
-class EmailConfigAdmin(admin.ModelAdmin):
+# EmailConfigAdmin kaldırıldı - SMTP ayarları artık kullanıcı profilinde
+
+
+@admin.register(IncomingEmail)
+class IncomingEmailAdmin(admin.ModelAdmin):
     """
-    E-posta konfigürasyonları için admin panel yapılandırması
+    Gelen e-postalar için admin panel yapılandırması
     """
-    list_display = ('name', 'email_address', 'smtp_server', 'is_active', 'is_default')
-    list_filter = ('is_active', 'is_default', 'use_tls')
-    search_fields = ('name', 'email_address', 'smtp_server')
-    readonly_fields = ('created_at', 'updated_at')
+    list_display = ('subject', 'sender_email', 'sender_name', 'status', 'company', 'contact', 'received_at', 'has_attachments')
+    list_filter = ('status', 'received_at', 'has_attachments', 'company')
+    search_fields = ('subject', 'content', 'sender_email', 'sender_name', 'company__name', 'contact__first_name', 'contact__last_name')
+    readonly_fields = ('message_id', 'received_at', 'created_at', 'updated_at', 'raw_headers')
+    date_hierarchy = 'received_at'
+
     fieldsets = (
         (None, {
-            'fields': ('name', 'is_active', 'is_default')
+            'fields': ('message_id', 'subject', 'content', 'content_html')
         }),
-        ('E-posta Bilgileri', {
-            'fields': ('email_address', 'display_name')
+        ('Gönderen', {
+            'fields': ('sender_email', 'sender_name')
         }),
-        ('Sunucu Ayarları', {
-            'fields': ('smtp_server', 'smtp_port', 'use_tls', 'username', 'password')
+        ('Alıcılar', {
+            'fields': ('recipients', 'cc', 'bcc')
         }),
-        ('Zaman Damgaları', {
-            'fields': ('created_at', 'updated_at')
+        ('İlişkiler', {
+            'fields': ('company', 'contact')
+        }),
+        ('Durum ve Tarihler', {
+            'fields': ('status', 'received_at', 'created_at', 'updated_at')
+        }),
+        ('Ek Dosyalar', {
+            'fields': ('has_attachments', 'attachments'),
+            'classes': ('collapse',),
+        }),
+        ('Teknik Bilgiler', {
+            'fields': ('raw_headers',),
+            'classes': ('collapse',),
         }),
     )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('company', 'contact')

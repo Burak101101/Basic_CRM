@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SadecrCRM - Müşteri İlişkileri Yönetimi",
+  title: "SadeCrm - Müşteri İlişkileri Yönetimi",
   description: "Firmalar, kişiler ve satış fırsatları için kapsamlı CRM çözümü",
 };
 

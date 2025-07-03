@@ -48,28 +48,41 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const initAuth = async () => {
       try {
         setLoading(true);
+        console.log('=== AUTH INIT ===');
+        console.log('isAuthenticated():', isAuthenticated());
+        console.log('authToken:', localStorage.getItem('authToken'));
+        console.log('user:', localStorage.getItem('user'));
+
         if (isAuthenticated()) {
           // Either get user from localStorage or from API
           const userData = getStoredUser();
+          console.log('Stored user data:', userData);
           if (userData) {
             setUser(userData);
             setIsAuth(true);
+            console.log('User set from localStorage');
           } else {
             try {
+              console.log('Fetching user from API...');
               const freshUserData = await getCurrentUser();
               setUser(freshUserData);
               setIsAuth(true);
+              console.log('User set from API:', freshUserData);
             } catch (error) {
               // Token might be invalid, clear auth state
+              console.log('API call failed, clearing auth');
               localStorage.removeItem('authToken');
               localStorage.removeItem('user');
             }
           }
+        } else {
+          console.log('User not authenticated');
         }
       } catch (error) {
         console.error('Authentication initialization error:', error);
       } finally {
         setLoading(false);
+        console.log('Auth init completed');
       }
     };
 
@@ -80,9 +93,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setError(null);
       setLoading(true);
+      console.log('=== LOGIN ATTEMPT ===');
+      console.log('Username:', username);
+
       const response = await loginUser({ username, password });
+      console.log('Login response:', response);
+      console.log('Token received:', response.token);
+
       setUser(response.user);
       setIsAuth(true);
+
+      console.log('Auth state updated, redirecting to dashboard');
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Giriş yaparken bir hata oluştu');

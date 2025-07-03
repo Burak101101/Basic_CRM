@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 # Temporarily disabled for development
 # from rest_framework.documentation import include_docs_urls
 
@@ -24,8 +26,15 @@ urlpatterns = [
     path('api/v1/customers/', include('customers.urls')),  # Customers API endpointleri
     path('api/v1/communications/', include('communications.urls')),  # Communications API endpointleri
     path('api/v1/opportunities/', include('opportunities.urls')),  # Opportunities API endpointleri
+    path('api/v1/events/', include('events.urls')),  # Events API endpointleri
+    path('api/v1/notifications/', include('notifications.urls')),  # Notifications API endpointleri
     path('api/v1/auth/', include('authentication.urls')),  # Authentication API endpointleri
+    path('api/v1/ai/', include('ai_assistant.urls')),  # AI Assistant API endpointleri
     path('api-auth/', include('rest_framework.urls')),  # DRF login/logout için
     # Temporarily disabled for development
     # path('docs/', include_docs_urls(title='CRM API')),  # API dokümantasyonu
 ]
+
+# Media files serving (development only)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

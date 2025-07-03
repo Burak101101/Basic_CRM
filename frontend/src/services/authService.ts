@@ -1,41 +1,8 @@
 import apiClient from './apiClient';
+import { AuthUser, AuthResponse, LoginData, RegisterData, PasswordChangeData, CompanyInfo } from '../types/auth';
 
 // Authentication API endpoints
 const AUTH_URL = '/api/v1/auth/';
-
-// Types for authentication
-export interface AuthUser {
-  id: number;
-  username: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-}
-
-export interface AuthResponse {
-  user: AuthUser;
-  token: string;
-}
-
-export interface LoginData {
-  username: string;
-  password: string;
-}
-
-export interface RegisterData {
-  username: string;
-  email: string;
-  password: string;
-  password_confirm: string;
-  first_name: string;
-  last_name: string;
-}
-
-export interface PasswordChangeData {
-  old_password: string;
-  new_password: string;
-  new_password_confirm: string;
-}
 
 // Register a new user
 export const registerUser = async (userData: RegisterData): Promise<AuthResponse> => {
@@ -48,6 +15,16 @@ export const registerUser = async (userData: RegisterData): Promise<AuthResponse
     localStorage.setItem('user', JSON.stringify(response.data.user));
   }
   
+  return response.data;
+};
+
+export const getCompanyInfo = async (): Promise<CompanyInfo> => {
+  const response = await apiClient.get(`${AUTH_URL}profile/company-info/`);
+  return response.data;
+};
+
+export const updateCompanyInfo = async (companyData: Partial<CompanyInfo>): Promise<CompanyInfo> => {
+  const response = await apiClient.put(`${AUTH_URL}profile/company-info/`, companyData);
   return response.data;
 };
 

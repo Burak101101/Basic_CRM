@@ -33,7 +33,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -45,13 +44,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 3rd party apps
     'rest_framework',
+    'django_filters',
     'corsheaders',
     'rest_framework.authtoken',  # Token authentication
+    'django_celery_beat',  # Celery Beat for periodic tasks
     # Local apps
     'customers',
     'opportunities',
     'communications',
     'authentication',
+    'events',
+    'notifications',
+    'ai_assistant',
 ]
 
 MIDDLEWARE = [
@@ -70,7 +74,7 @@ ROOT_URLCONF = 'crm_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -134,19 +138,43 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'tr-tr'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Istanbul'
 
 USE_I18N = True
 
 USE_TZ = True
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+
+# Celery Beat Configuration
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Email Configuration
+DEFAULT_FROM_EMAIL = 'noreply@crm.com'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# Email encoding
+DEFAULT_CHARSET = 'utf-8'
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Media files (User uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

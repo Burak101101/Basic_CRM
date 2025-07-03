@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yeni Toplantı: {{ event.title }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="border-top: 4px solid #3b82f6; background-color: #ffffff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px;">
+        <h2 style="color: #3b82f6; margin-top: 0;">Yeni Toplantı</h2>
+        
+        <p>Merhaba {{ user_profile.user.first_name }},</p>
+        
+        <p>Yeni bir toplantı oluşturuldu:</p>
+        
+        <div style="background-color: #f9fafb; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 4px; margin: 15px 0;">
+            <h3 style="margin-top: 0; color: #1f2937;">{{ event.title }}</h3>
+            <p><strong>Tarih:</strong> {{ event.start_datetime|date:"d.m.Y H:i" }}</p>
+            {% if event.end_datetime %}
+            <p><strong>Bitiş:</strong> {{ event.end_datetime|date:"d.m.Y H:i" }}</p>
+            {% endif %}
+            {% if event.location %}
+            <p><strong>Lokasyon:</strong> {{ event.location }}</p>
+            {% endif %}
+            {% if event.company %}
+            <p><strong>Firma:</strong> {{ event.company.name }}</p>
+            {% endif %}
+            
+            {% if contacts %}
+            <p><strong>Katılımcılar:</strong></p>
+            <ul>
+                {% for contact in contacts %}
+                <li>
+                    {{ contact.first_name }} {{ contact.last_name }}
+                    {% if contact.email %}
+                    ({{ contact.email }})
+                    {% endif %}
+                    {% if contact.phone %}
+                    - {{ contact.phone }}
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            
+            {% if event.meeting_url %}
+            <p><strong>Toplantı Linki:</strong> <a href="{{ event.meeting_url }}" style="color: #3b82f6; text-decoration: none;" target="_blank">{{ event.meeting_url }}</a></p>
+            {% endif %}
+        </div>
+        
+        {% if event.description %}
+        <div style="margin: 15px 0;">
+            <p><strong>Açıklama:</strong></p>
+            <p>{{ event.description }}</p>
+        </div>
+        {% endif %}
+        
+        <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+            <p style="margin: 0; color: #6b7280;">İyi çalışmalar,</p>
+            <p style="margin: 0; font-weight: bold; color: #1f2937;">CRM Sistemi</p>
+        </div>
+    </div>
+    
+    <div style="text-align: center; font-size: 12px; color: #6b7280;">
+        <p>Bu e-posta, CRM sistemi tarafından otomatik olarak gönderilmiştir.</p>
+    </div>
+</body>
+</html>

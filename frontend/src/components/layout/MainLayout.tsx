@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import {
   HomeIcon,
   BuildingOfficeIcon,
@@ -11,7 +12,8 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 
 type NavItem = {
@@ -25,8 +27,8 @@ const navigation: NavItem[] = [
   { name: 'Firmalar', href: '/companies', icon: BuildingOfficeIcon },
   { name: 'İletişim Kişileri', href: '/contacts', icon: UsersIcon },
   { name: 'Satış Fırsatları', href: '/opportunities', icon: LifebuoyIcon },
-  { name: 'İletişim', href: '/communications', icon: EnvelopeIcon },
-  { name: 'Ayarlar', href: '/settings', icon: Cog6ToothIcon },
+  { name: 'E-posta', href: '/communications', icon: EnvelopeIcon },
+  { name: 'Etkinlikler', href: '/events', icon: CalendarIcon },
 ];
 
 interface MainLayoutProps {
@@ -45,7 +47,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <div className="hidden md:flex md:w-64 md:flex-col">
           <div className="flex flex-1 flex-col min-h-0 bg-gray-800">
             <div className="flex items-center h-16 flex-shrink-0 px-4 bg-gray-900">
-              <h1 className="text-white font-bold text-lg">SadecrCRM</h1>
+              <h1 className="text-white font-bold text-lg">SadeCrm</h1>
             </div>
             <div className="flex flex-col flex-grow pt-5 overflow-y-auto">
               <nav className="flex-1 px-2 pb-4 space-y-1">
@@ -85,12 +87,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
               <div className="py-4 flex justify-between">
                 <div className="flex items-center">
                   <h2 className="text-lg font-semibold text-gray-900">
-                    {navigation.find(item => pathname === item.href || pathname?.startsWith(item.href + '/'))?.name || 'SadecrCRM'}
+                    {navigation.find(item => pathname === item.href || pathname?.startsWith(item.href + '/'))?.name || 'SadeCrm'}
                   </h2>
                 </div>
                 
-                {/* User dropdown */}
-                <div className="relative">
+                {/* Notifications and User dropdown */}
+                <div className="flex items-center space-x-4">
+                  <NotificationBell />
+
+                  <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center space-x-2 text-sm focus:outline-none"
@@ -129,6 +134,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                       </div>
                     </div>
                   )}
+                  </div>
                 </div>
               </div>
             </div>

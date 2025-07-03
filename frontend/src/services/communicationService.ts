@@ -1,9 +1,13 @@
 import apiClient from './apiClient';
-import { 
-  EmailTemplate, 
-  EmailMessage, 
-  EmailConfig, 
-  SendEmailRequest 
+import { getAuthToken } from './authService';
+import axios from 'axios';
+import {
+  EmailTemplate,
+  EmailMessage,
+  EmailConfig,
+  SendEmailRequest,
+  IncomingEmail,
+  ImapSettings
 } from '../types/communications';
 
 // E-posta şablonları için API çağrıları
@@ -68,6 +72,25 @@ export const getEmailById = async (id: number): Promise<EmailMessage> => {
 // E-posta gönder
 export const sendEmail = async (emailData: SendEmailRequest): Promise<EmailMessage> => {
   const response = await apiClient.post(`${EMAILS_URL}send/`, emailData);
+  return response.data;
+};
+
+// Gönderilen e-postaları getir
+export const getSentEmails = async (filters?: {
+  company?: number;
+  contact?: number;
+  content?: string;
+  opportunity?: number;
+}): Promise<EmailMessage[]> => {
+  let url = `${EMAILS_URL}?status=sent`;
+
+  if (filters) {
+    if (filters.company) url += `&company=${filters.company}`;
+    if (filters.contact) url += `&contact=${filters.contact}`;
+    if (filters.opportunity) url += `&opportunity=${filters.opportunity}`;
+  }
+
+  const response = await apiClient.get(url);
   return response.data;
 };
 
@@ -143,3 +166,96 @@ export const getTestEmailDetail = async (id: string): Promise<any> => {
   const response = await apiClient.get(`${EMAILS_URL}${id}/test-email/`);
   return response.data;
 };
+
+// Gelen e-postalar için API çağrıları
+const INCOMING_EMAILS_URL = '/api/v1/communications/incoming-emails/';
+
+// Gelen e-postaları getir
+export const getIncomingEmails = async (): Promise<IncomingEmail[]> => {
+  try {
+    const response = await apiClient.get(INCOMING_EMAILS_URL);
+    return response.data.results || response.data;
+  } catch (error) {
+    console.error("Incoming emails fetch error:", error);
+    return [];
+  }
+};
+
+// Belirli bir gelen e-postayı getir
+export const getIncomingEmailById = async (id: number): Promise<IncomingEmail> => {
+  const response = await apiClient.get(`${INCOMING_EMAILS_URL}${id}/`);
+  return response.data;
+};
+
+// E-postaları IMAP ile al
+export const fetchEmailsFromIMAP = async (): Promise<{ success: boolean; message: string; fetched_count: number; saved_count: number }> => {
+  const response = await apiClient.post(`${INCOMING_EMAILS_URL}fetch/`);
+  return response.data;
+};
+
+// E-postayı okunmuş olarak işaretle
+export const markEmailAsRead = async (id: number): Promise<any> => {
+  const response = await apiClient.patch(`${INCOMING_EMAILS_URL}${id}/mark-read/`);
+  return response.data;
+};
+
+// E-postayı okunmamış olarak işaretle
+export const markEmailAsUnread = async (id: number): Promise<any> => {
+  const response = await apiClient.patch(`${INCOMING_EMAILS_URL}${id}/mark-unread/`);
+  return response.data;
+};
+
+// IMAP sistem durumunu kontrol et
+export const getIMAPStatus = async (): Promise<any> => {
+  const response = await apiClient.get(`${INCOMING_EMAILS_URL}imap-status/`);
+  return response.data;
+};
+
+class ImapService {
+  private getAuthHeaders() {
+    const token = getAuthToken();
+    console.log('Auth token:', token);
+    return {
+      'Authorization': `Token ${token}`,
+      'Content-Type': 'application/json',
+    };
+  }
+
+  async getUserImapSettings(): Promise<ImapSettings> {
+    try {
+      console.log('Getting IMAP settings from:', `http://localhost:8000/api/v1/auth/profile/imap-settings/`);
+      const response = await axios.get(
+        `http://localhost:8000/api/v1/auth/profile/imap-settings/`,
+        { headers: this.getAuthHeaders() }
+      );
+
+      console.log('IMAP settings response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Get IMAP settings error:', error);
+      console.error('Error response:', error.response?.data);
+      throw new Error('Gelen kutusu ayarları alınırken bir hata oluştu.');
+    }
+  }
+
+  async updateUserImapSettings(settings: ImapSettings): Promise<ImapSettings> {
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/api/v1/auth/profile/imap-settings/`,
+        settings,
+        { headers: this.getAuthHeaders() }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Update IMAP settings error:', error);
+      console.error('Error response:', error.response?.data);
+      throw new Error(
+        error.response?.data?.error ||
+        'Gelen kutusu ayarları güncellenirken bir hata oluştu.'
+      );
+    }
+  }
+}
+
+export const imapService = new ImapService();

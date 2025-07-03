@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ notification.title }}</title>
+</head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; background: #f3f4f6; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(59,130,246,0.08); overflow: hidden;">
+        <div style="background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%); padding: 24px 32px;">
+            <h2 style="color: #fff; margin: 0; font-size: 1.5rem; letter-spacing: 0.5px;">{{ notification.title }}</h2>
+        </div>
+        <div style="padding: 32px;">
+            <p style="font-size: 1.1rem; color: #111827; margin-top: 0;">Merhaba {{ notification.recipient.first_name }},</p>
+            <div style="background: #f9fafb; border-left: 4px solid #3b82f6; padding: 18px 20px; border-radius: 6px; margin: 18px 0; font-size: 1rem; color: #374151;">
+                <p style="margin: 0;">{{ notification.message }}</p>
+                {% if notification.action_url %}
+                <p style="margin-top: 18px;"><a href="{{ notification.action_url }}" style="display: inline-block; background: #3b82f6; color: #fff; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 500;">Detayları Görüntüle</a></p>
+                {% endif %}
+            </div>
+            <div style="margin-top: 36px; padding-top: 18px; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0; color: #6b7280;">İyi çalışmalar,</p>
+                <p style="margin: 0; font-weight: bold; color: #1f2937;">CRM Sistemi</p>
+            </div>
+        </div>
+    </div>
+    <div style="text-align: center; font-size: 12px; color: #6b7280; margin-top: 24px;">
+        <p>Bu e-posta, CRM sistemi tarafından otomatik olarak gönderilmiştir.</p>
+    </div>
+</body>
+</html>

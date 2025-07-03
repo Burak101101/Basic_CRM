@@ -6,6 +6,8 @@ import { useForm } from 'react-hook-form';
 import AppWrapper from '@/components/layout/AppWrapper';
 import PageHeader from '@/components/layout/PageHeader';
 import Card from '@/components/layout/Card';
+import { NoteEditor } from '@/components/common/TinyMCEEditor';
+import FileUpload from '@/components/common/FileUpload';
 import { Note } from '@/types/customer';
 import { getNoteById, updateNote } from '@/services/noteService';
 
@@ -22,6 +24,8 @@ export default function EditNote({ params }: EditNoteProps) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [note, setNote] = useState<Note | null>(null);
+  const [richContent, setRichContent] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -29,7 +33,14 @@ export default function EditNote({ params }: EditNoteProps) {
         setIsLoading(true);
         const noteData = await getNoteById(id);
         setNote(noteData);
-        reset(noteData);
+        reset({
+          ...noteData,
+          note_date: noteData.note_date ? noteData.note_date.slice(0, 16) : '',
+          reminder_date: noteData.reminder_date ? noteData.reminder_date.slice(0, 16) : ''
+        });
+
+        // Rich content'i ayarla
+        setRichContent(noteData.rich_content || noteData.content);
       } catch (err) {
         console.error('Not bilgileri yüklenirken hata:', err);
         setError('Not bilgileri yüklenirken bir sorun oluştu.');
@@ -44,9 +55,22 @@ export default function EditNote({ params }: EditNoteProps) {
   const onSubmit = async (data: Note) => {
     try {
       setError(null);
+      // Dosya yükleme işlemi burada yapılacak (şimdilik sadece dosya isimlerini saklıyoruz)
+      const attachments = files.map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type
+      }));
+
       await updateNote(id, {
         title: data.title,
-        content: data.content
+        content: richContent || data.content,
+        rich_content: richContent,
+        company: note?.company, // note varsa company=note.company
+        contact: note?.contact,
+        note_date: data.note_date,
+        reminder_date: data.reminder_date,
+        attachments: attachments
       });
       
       // Not güncellendikten sonra ilgili sayfaya yönlendirme yap
@@ -108,17 +132,61 @@ export default function EditNote({ params }: EditNoteProps) {
             {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>}
           </div>
 
+          {/* Content Editor */}
           <div>
             <label htmlFor="content" className="block text-sm font-medium text-gray-700">
               İçerik *
             </label>
-            <textarea
-              id="content"
-              rows={6}
-              {...register('content', { required: 'Not içeriği zorunludur' })}
-              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${errors.content ? 'border-red-300' : ''}`}
+            <div className="mt-1">
+              <NoteEditor
+                value={richContent}
+                onChange={setRichContent}
+                placeholder="Not içeriği buraya yazılacak..."
+                height={400}
+              />
+              {!richContent && (
+                <p className="mt-1 text-sm text-red-600">Not içeriği zorunludur</p>
+              )}
+            </div>
+          </div>
+
+          {/* Note Date */}
+          <div>
+            <label htmlFor="note_date" className="block text-sm font-medium text-gray-700">
+              Not Tarihi
+            </label>
+            <input
+              type="datetime-local"
+              id="note_date"
+              {...register('note_date')}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
-            {errors.content && <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>}
+          </div>
+
+          {/* Reminder Date */}
+          <div>
+            <label htmlFor="reminder_date" className="block text-sm font-medium text-gray-700">
+              Hatırlatma Tarihi
+            </label>
+            <input
+              type="datetime-local"
+              id="reminder_date"
+              {...register('reminder_date')}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+          </div>
+
+          {/* File Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Dosya Ekleri
+            </label>
+            <FileUpload
+              files={files}
+              onFilesChange={setFiles}
+              maxFiles={5}
+              maxFileSize={10}
+            />
           </div>
 
           <div className="flex justify-end space-x-3 pt-5 border-t">

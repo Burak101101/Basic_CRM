@@ -106,7 +106,7 @@ export default function EmailTemplateDetail({ params }: EmailTemplateDetailProps
         actionButton={
           <div className="flex space-x-2">
             <Link
-              href={`/communications/new?template=${template.id}`}
+              href={`/communications/compose?template=${template.id}`}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm"
             >
               <EnvelopeIcon className="h-5 w-5 mr-2" />
@@ -193,7 +193,7 @@ export default function EmailTemplateDetail({ params }: EmailTemplateDetailProps
               Düzenle
             </Link>
             <Link
-              href={`/communications/new?template=${template.id}`}
+              href={`/communications/compose?template=${template.id}`}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm"
             >
               <EnvelopeIcon className="h-5 w-5 mr-2" />

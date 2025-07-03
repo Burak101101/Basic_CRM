@@ -77,17 +77,29 @@ class NoteSerializer(serializers.ModelSerializer):
     """
     company_name = serializers.SerializerMethodField(read_only=True)
     contact_name = serializers.SerializerMethodField(read_only=True)
-    
+
     class Meta:
         model = Note
         fields = '__all__'
-        
+
     def get_company_name(self, obj):
         if obj.company:
             return obj.company.name
         return None
-        
+
     def get_contact_name(self, obj):
         if obj.contact:
             return str(obj.contact)
         return None
+
+    def validate(self, data):
+        """
+        Not validasyonu
+        """
+        # En az bir firma veya kişi seçilmeli
+        if not data.get('company') and not data.get('contact'):
+            raise serializers.ValidationError(
+                "Not en az bir firma veya kişiye bağlı olmalıdır."
+            )
+
+        return data

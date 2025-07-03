@@ -92,10 +92,15 @@ export interface Note {
   id: number;
   title: string;
   content: string;
+  rich_content?: string | null;
   company: number | null;
   company_name?: string | null;
   contact: number | null;
   contact_name?: string | null;
+  note_date?: string | null;
+  reminder_date?: string | null;
+  is_reminder_sent: boolean;
+  attachments: any[];
   created_at: string;
   updated_at: string;
 }
@@ -104,6 +109,7 @@ export interface NoteNested {
   id: number;
   title: string;
   content: string;
+  rich_content?: string | null;
   created_at: string;
   updated_at: string;
 }

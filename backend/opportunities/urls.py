@@ -6,6 +6,8 @@ from .views import OpportunityStatusViewSet, OpportunityViewSet, OpportunityActi
 router = DefaultRouter()
 router.register(r'statuses', OpportunityStatusViewSet)
 router.register(r'opportunities', OpportunityViewSet)
+# Kanban viewset'i için özel bir endpoint
+router.register(r'opportunities/(?P<id>\d+)/change-status', OpportunityViewSet, basename='change-status')
 router.register(r'activities', OpportunityActivityViewSet)
 
 urlpatterns = [

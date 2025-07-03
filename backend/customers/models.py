@@ -125,21 +125,32 @@ class Note(models.Model):
     """
     title = models.CharField(max_length=255, verbose_name="Başlık")
     content = models.TextField(verbose_name="İçerik")
+    rich_content = models.TextField(blank=True, null=True, verbose_name="Zengin İçerik (HTML)")
     company = models.ForeignKey(
-        Company, 
-        on_delete=models.CASCADE, 
-        related_name="notes", 
-        null=True, 
-        blank=True, 
+        Company,
+        on_delete=models.CASCADE,
+        related_name="notes",
+        null=True,
+        blank=True,
         verbose_name="İlişkili Firma"
     )
     contact = models.ForeignKey(
-        Contact, 
-        on_delete=models.CASCADE, 
-        related_name="notes", 
-        null=True, 
-        blank=True, 
+        Contact,
+        on_delete=models.CASCADE,
+        related_name="notes",
+        null=True,
+        blank=True,
         verbose_name="İlişkili Kişi"
+    )
+    # Yeni alanlar
+    note_date = models.DateTimeField(blank=True, null=True, verbose_name="Not Tarihi")
+    reminder_date = models.DateTimeField(blank=True, null=True, verbose_name="Hatırlatma Tarihi")
+    is_reminder_sent = models.BooleanField(default=False, verbose_name="Hatırlatma Gönderildi")
+    attachments = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="Ekler",
+        help_text="Dosya referansları için JSON formatında"
     )
     created_at = models.DateTimeField(default=timezone.now, verbose_name="Oluşturulma Tarihi")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Güncellenme Tarihi")

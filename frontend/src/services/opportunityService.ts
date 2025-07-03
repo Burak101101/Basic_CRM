@@ -62,7 +62,7 @@ export const deleteOpportunity = async (id: number): Promise<void> => {
 
 // Fırsat durumunu değiştir
 export const changeOpportunityStatus = async (id: number, statusId: number): Promise<OpportunityDetail> => {
-  const response = await apiClient.post(`${OPPORTUNITIES_URL}${id}/change-status/`, { status_id: statusId });
+  const response = await apiClient.post(`${OPPORTUNITIES_URL}${id}/change_status/`, { status_id: statusId });
   return response.data;
 };
 

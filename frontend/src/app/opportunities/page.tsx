@@ -12,32 +12,73 @@ import {
   LifebuoyIcon,
   FunnelIcon
 } from '@heroicons/react/24/outline';
-import { getOpportunitiesKanban } from '@/services/opportunityService';
-import { KanbanColumn } from '@/types/opportunities';
+import { getOpportunitiesKanban, changeOpportunityStatus } from '@/services/opportunityService';
+import { KanbanColumn, OpportunityList } from '@/types/opportunities';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import DroppableColumn from '@/components/opportunities/DroppableColumn';
 
 export default function Opportunities() {
   const [viewType, setViewType] = useState<'kanban' | 'list'>('kanban');
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    const fetchOpportunities = async () => {
-      try {
-        setIsLoading(true);
-        const kanbanData = await getOpportunitiesKanban();
-        setColumns(kanbanData);
-        setError(null);
-      } catch (err) {
-        console.error('Fırsatlar yüklenirken hata:', err);
-        setError('Fırsatlar yüklenirken bir sorun oluştu.');
-        // Don't use mock data as fallback as it doesn't match the required type
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchOpportunities = async () => {
+  try {
+    setIsLoading(true);
+    const kanbanData = await getOpportunitiesKanban();
+    setColumns(kanbanData);
+    setError(null);
+  } catch (err) {
+    console.error('Fırsatlar yüklenirken hata:', err);
+    setError('Fırsatlar yüklenirken bir sorun oluştu.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
+useEffect(() => {
+  fetchOpportunities();
+}, []);
+
+// handleDrop fonksiyonun içinde fetchOpportunities erişilebilir
+const handleDrop = async (opportunityId: number, newStatusId: number) => {
+  // 1. Mevcut fırsatı bul
+  const draggedOpportunity = columns
+    .flatMap(col => col.opportunities)
+    .find(opp => opp.id === opportunityId);
+
+  if (!draggedOpportunity) return;
+
+  // 2. UI'da anında yeri değiştir (optimistic update)
+  const updatedColumns = columns.map(col => {
+    // Drag edilen fırsatı eski kolondan çıkar
+    let updatedOpportunities = col.opportunities.filter(opp => opp.id !== opportunityId);
+
+    // Eğer bu column yeni status id'ye sahipse, ekle
+    if (col.status_id === newStatusId) {
+      updatedOpportunities = [...updatedOpportunities, { ...draggedOpportunity, status: newStatusId }];
+    }
+
+    return {
+      ...col,
+      opportunities: updatedOpportunities,
+      count: updatedOpportunities.length
+    };
+  });
+
+  setColumns(updatedColumns); // UI'da anında güncelleme
+
+  // 3. API'ye gönder
+  try {
+    await changeOpportunityStatus(opportunityId, newStatusId);
+  } catch (error) {
+    console.error('Fırsat durumu değiştirilirken hata:', error);
+    // 4. API başarısızsa geri al
     fetchOpportunities();
-  }, []);
+  }
+};
+
 
   // Fallback mock data in case the API fails
   const mockColumns = [
@@ -219,64 +260,17 @@ export default function Opportunities() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {columns.map(column => (
-                <div key={column.status_id} className="flex flex-col">
-                  <div 
-                    className="mb-2 px-4 py-2 rounded-md text-white font-medium text-sm flex justify-between items-center"
-                    style={{ backgroundColor: column.status_color }}
-                  >
-                    <span>{column.status_name}</span>
-                    <span className="bg-white bg-opacity-30 px-2 py-0.5 rounded-md text-xs">
-                      {column.count} / {formatCurrency(column.total_value)}
-                    </span>
-                  </div>
-
-                  <div className="space-y-3 flex-grow">
-                    {column.opportunities.map(opportunity => (
-                      <Link key={opportunity.id} href={`/opportunities/${opportunity.id}`}>
-                        <Card className="hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-900 truncate">
-                              {opportunity.title}
-                            </h4>
-                            <p className="text-xs text-gray-500 mt-1 truncate">
-                              {opportunity.company_name}
-                            </p>
-                          </div>
-                          <div className="mt-3 flex items-center justify-between">
-                            <div className="text-sm font-semibold text-gray-900">
-                              {formatCurrency(opportunity.value)}
-                            </div>
-                            <div>
-                              {getPriorityBadge(opportunity.priority)}
-                            </div>
-                          </div>
-                          <div className="mt-2 text-xs text-gray-500">
-                            Kapanış: {new Date(opportunity.expected_close_date).toLocaleDateString('tr-TR')}
-                          </div>
-                        </Card>
-                      </Link>
-                    ))}
-                    {column.opportunities.length === 0 && (
-                      <div className="bg-gray-50 border border-dashed border-gray-200 rounded-md p-4 text-center">
-                        <p className="text-sm text-gray-500">Fırsat bulunmuyor</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="mt-4">
-                    <Link
-                      href={`/opportunities/new?status=${column.status_id}`}
-                      className="w-full flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
-                    >
-                      <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                      Fırsat Ekle
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <DndProvider backend={HTML5Backend}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {columns.map(column => (
+                  <DroppableColumn
+                    key={column.status_id}
+                    column={column}
+                    onDrop={handleDrop}
+                  />
+                ))}
+              </div>
+            </DndProvider>
           )}
         </div>
       )}

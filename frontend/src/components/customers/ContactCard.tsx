@@ -1,5 +1,8 @@
+
+'use client';
 import Link from 'next/link';
 import { Contact } from '@/types/customer';
+import { useRouter } from 'next/navigation';
 import { UserIcon, PhoneIcon, EnvelopeIcon, BuildingOfficeIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 
 interface ContactCardProps {
@@ -8,10 +11,11 @@ interface ContactCardProps {
 }
 
 export default function ContactCard({ contact, hideCompany = false }: ContactCardProps) {
+  const router = useRouter();
   return (
-    <Link 
-      href={`/contacts/${contact.id}`} 
-      className="block group"
+    <div
+      onClick={() => router.push(`/contacts/${contact.id}`)}
+      className="cursor-pointer block group"
     >
       <div className="bg-white shadow overflow-hidden rounded-lg hover:shadow-md transition-shadow duration-300">
         <div className="px-4 py-5 sm:px-6 flex justify-between items-start">
@@ -110,7 +114,7 @@ export default function ContactCard({ contact, hideCompany = false }: ContactCar
               <div className="flex items-center space-x-2 pt-2">
                 {contact.email && (
                   <Link
-                    href={`/communications/new?contact=${contact.id}&email=${contact.email}&name=${encodeURIComponent(contact.first_name + ' ' + contact.last_name)}`}
+                    href={`/communications/compose?contact=${contact.id}`}
                     onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                   >
@@ -134,6 +138,6 @@ export default function ContactCard({ contact, hideCompany = false }: ContactCar
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

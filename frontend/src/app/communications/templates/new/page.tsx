@@ -8,28 +8,31 @@ import PageHeader from '@/components/layout/PageHeader';
 import Card from '@/components/layout/Card';
 import { EmailTemplate } from '@/types/communications';
 import { createEmailTemplate } from '@/services/communicationService';
+import { EmailEditor } from '@/components/common/TinyMCEEditor';
 
 export default function NewEmailTemplate() {
   const router = useRouter();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<EmailTemplate>();
   const [error, setError] = useState<string | null>(null);
   const [variableInputs, setVariableInputs] = useState<string[]>(['']);
+  const [content, setContent] = useState('');
     const onSubmit = async (data: any) => {
     try {
       setError(null);
-      
+
       // Filter out empty variable inputs
       const variables = variableInputs.filter(v => v.trim() !== '')
         .reduce((acc, curr) => {
           acc[curr] = `{${curr}}`;
           return acc;
         }, {} as Record<string, string>);
-      
+
       const templateData = {
         ...data,
+        content: content,
         variables
       };
-      
+
       console.log('Şablon oluşturuluyor:', templateData);
       await createEmailTemplate(templateData);
       console.log('Şablon başarıyla oluşturuldu');
@@ -101,20 +104,20 @@ export default function NewEmailTemplate() {
             <label htmlFor="content" className="block text-sm font-medium text-gray-700">
               Şablon İçeriği *
             </label>
-            <textarea
-              id="content"
-              rows={10}
-              {...register('content', { required: 'Şablon içeriği zorunludur' })}
-              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${errors.content ? 'border-red-300' : ''}`}
-              placeholder="Sayın {ad_soyad},
-
-ABC Firması ile ilgili talebiniz hakkında sizinle iletişime geçiyorum.
-..."
-            />
-            {errors.content && <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>}
-            <p className="mt-1 text-xs text-gray-500">
-              Değişkenler için {'{değişken_adı}'} formatını kullanın. Örn: {'{ad_soyad}'}
-            </p>
+            <div className="mt-1">
+              <EmailEditor
+                value={content}
+                onChange={setContent}
+                placeholder="Sayın {ad_soyad}, ABC Firması ile ilgili talebiniz hakkında sizinle iletişime geçiyorum..."
+                height={400}
+              />
+              {!content && (
+                <p className="mt-1 text-sm text-red-600">Şablon içeriği zorunludur</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Değişkenler için {'{değişken_adı}'} formatını kullanın. Örn: {'{ad_soyad}'}
+              </p>
+            </div>
           </div>
 
           <div>

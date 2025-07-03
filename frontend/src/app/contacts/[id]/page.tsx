@@ -1,47 +1,60 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import AppWrapper from '@/components/layout/AppWrapper';
 import PageHeader from '@/components/layout/PageHeader';
 import Card from '@/components/layout/Card';
 import { getContactById, deleteContact } from '@/services/contactService';
 import { getOpportunities } from '@/services/opportunityService';
+import { getContactEvents } from '@/services/eventService';
 import { Contact, Note } from '@/types/customer';
 import { OpportunityList } from '@/types/opportunities';
+import { EventList } from '@/types/events';
 import Link from 'next/link';
-import { 
-  UserIcon, 
-  PhoneIcon, 
-  EnvelopeIcon, 
-  BuildingOfficeIcon, 
+import {
+  UserIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+  BuildingOfficeIcon,
   BriefcaseIcon,
   PencilIcon,
   TrashIcon,
-  PlusIcon
+  PlusIcon,
+  CalendarIcon,
+  MapPinIcon
 } from '@heroicons/react/24/outline';
+import AIButton from '@/components/ai/AIButton';
+import OpportunityProposalModal from '@/components/ai/OpportunityProposalModal';
+import { aiService, OpportunityAIResponse } from '@/services/aiService';
 
 interface ContactDetailsProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function ContactDetails({ params }: ContactDetailsProps) {
-  const id = parseInt(params.id);
+  const { id } = use(params);
+  const parsedId = parseInt(id);
   const router = useRouter();
   const [contact, setContact] = useState<Contact | null>(null);
   const [opportunities, setOpportunities] = useState<OpportunityList[]>([]);
+  const [events, setEvents] = useState<EventList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // AI state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiOpportunities, setAiOpportunities] = useState<OpportunityAIResponse | null>(null);
+
   useEffect(() => {
     const fetchContact = async () => {
       try {
         setIsLoading(true);
-        const data = await getContactById(id);
+        const data = await getContactById(parsedId);
         setContact(data);
 
         // Kişinin fırsatlarını getir
@@ -51,6 +64,10 @@ export default function ContactDetails({ params }: ContactDetailsProps) {
           opp.company === data.company
         );
         setOpportunities(contactOpportunities);
+
+        // Kişinin etkinliklerini getir
+        const eventsData = await getContactEvents(Number(parsedId));
+        setEvents(eventsData);
       } catch (err) {
         console.error('Kişi detayları yüklenirken hata:', err);
         setError('Kişi detayları yüklenirken bir sorun oluştu.');
@@ -65,13 +82,38 @@ export default function ContactDetails({ params }: ContactDetailsProps) {
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      await deleteContact(id);
+      await deleteContact(parsedId);
       router.push('/contacts');
     } catch (err) {
       console.error('Kişi silinirken hata:', err);
       setError('Kişi silinirken bir sorun oluştu.');
       setIsDeleting(false);
     }
+  };
+
+  const handleAIOpportunityGenerate = async () => {
+    try {
+      setAiLoading(true);
+      setError(null);
+
+      const aiRequest = {
+        company_id: contact?.company || undefined,
+        contact_id: parsedId,
+        additional_context: `Kişi: ${contact?.first_name} ${contact?.last_name}, Pozisyon: ${contact?.position || 'Belirtilmemiş'}`
+      };
+
+      const opportunityData = await aiService.generateOpportunityProposal(aiRequest);
+      setAiOpportunities(opportunityData);
+    } catch (err: any) {
+      console.error('AI fırsat önerisi oluşturma hatası:', err);
+      setError(err.message || 'AI fırsat önerisi oluşturulurken bir hata oluştu.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleCloseAIModal = () => {
+    setAiOpportunities(null);
   };
 
   if (isLoading) {
@@ -313,15 +355,22 @@ export default function ContactDetails({ params }: ContactDetailsProps) {
           {contact.notes && contact.notes.length > 0 ? (
             <div className="divide-y divide-gray-200">
               {contact.notes.map((note) => (
-                <div key={note.id} className="py-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-sm font-medium text-gray-900">{note.title}</h4>
-                    <span className="text-xs text-gray-500">
-                      {new Date(note.created_at).toLocaleDateString('tr-TR')}
-                    </span>
+                <Link key={note.id} href={`/notes/${note.id}/edit`}>
+                  <div className="py-4 hover:bg-gray-50 cursor-pointer rounded-lg px-2 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="text-sm font-medium text-gray-900">{note.title}</h4>
+                      <span className="text-xs text-gray-500">
+                        {new Date(note.created_at).toLocaleDateString('tr-TR')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 whitespace-pre-wrap line-clamp-3">
+                      {note.rich_content ?
+                        note.rich_content.replace(/<[^>]*>/g, '').trim() :
+                        note.content
+                      }
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap">{note.content}</p>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
@@ -339,13 +388,99 @@ export default function ContactDetails({ params }: ContactDetailsProps) {
         </Card>
       </div>
 
+      {/* İletişim Geçmişi - Etkinlikler */}
+      <div className="mt-6">
+        <Card
+          title={`İletişim Geçmişi ${events.length > 0 ? `(${events.length})` : ''}`}
+          subtitle="Kişi ile yapılan toplantılar, görüşmeler ve etkinlikler"
+          footer={
+            <div className="flex justify-end">
+              <Link
+                href={`/events/new?contact=${id}`}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <CalendarIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                Etkinlik Ekle
+              </Link>
+            </div>
+          }
+        >
+          {events.length > 0 ? (
+            <div className="space-y-4">
+              {events.map((event) => (
+                <Link key={event.id} href={`/events/${event.id}`}>
+                  <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-gray-900">{event.title}</h4>
+                        <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                          <span className="inline-flex items-center">
+                            <CalendarIcon className="h-4 w-4 mr-1" />
+                            {event.event_type}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            event.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            event.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                            event.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {event.status}
+                          </span>
+                          {event.location && (
+                            <span className="inline-flex items-center">
+                              <MapPinIcon className="h-4 w-4 mr-1" />
+                              {event.location}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-gray-900">
+                          {new Date(event.start_datetime).toLocaleDateString('tr-TR')}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(event.start_datetime).toLocaleTimeString('tr-TR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="text-gray-500 mb-4">Bu kişi ile henüz etkinlik gerçekleştirilmemiş</p>
+              <Link
+                href={`/events/new?contact=${id}`}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <CalendarIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                İlk Etkinliği Ekle
+              </Link>
+            </div>
+          )}
+        </Card>
+      </div>
+
       {/* Fırsatlar */}
       <div className="mt-6">
         <Card
           title={`Satış Fırsatları ${opportunities.length > 0 ? `(${opportunities.length})` : ''}`}
           subtitle={opportunities.length > 0 ? `Toplam Değer: ${opportunities.reduce((sum, opp) => sum + Number(opp.value), 0).toLocaleString('tr-TR')} TL` : undefined}
           footer={
-            <div className="flex justify-end">
+            <div className="flex justify-end space-x-3">
+              <AIButton
+                onClick={handleAIOpportunityGenerate}
+                loading={aiLoading}
+                size="md"
+                variant="outline"
+              >
+                AI Fırsat Öner
+              </AIButton>
               <Link
                 href={`/opportunities/new?company=${contact?.company}&contact=${id}`}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -395,17 +530,36 @@ export default function ContactDetails({ params }: ContactDetailsProps) {
           ) : (
             <div className="text-center py-6">
               <p className="text-gray-500 mb-4">Bu kişiye ait satış fırsatı bulunmuyor</p>
-              <Link
-                href={`/opportunities/new?company=${contact?.company}&contact=${id}`}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                Fırsat Ekle
-              </Link>
+              <div className="flex justify-center space-x-3">
+                <AIButton
+                  onClick={handleAIOpportunityGenerate}
+                  loading={aiLoading}
+                  size="md"
+                  variant="outline"
+                >
+                  AI Fırsat Öner
+                </AIButton>
+                <Link
+                  href={`/opportunities/new?company=${contact?.company}&contact=${id}`}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                  Fırsat Ekle
+                </Link>
+              </div>
             </div>
           )}
         </Card>
       </div>
+
+      {/* AI Opportunity Proposal Modal */}
+      <OpportunityProposalModal
+        isOpen={!!aiOpportunities}
+        onClose={handleCloseAIModal}
+        proposals={aiOpportunities}
+        companyId={contact?.company || undefined}
+        contactId={parsedId}
+      />
     </AppWrapper>
   );
 }

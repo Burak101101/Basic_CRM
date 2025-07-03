@@ -1,14 +1,35 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from django.contrib.auth import authenticate
+from .models import UserProfile
 
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """User profile serializer for email settings"""
+
+    class Meta:
+        model = UserProfile
+        fields = ('smtp_server', 'smtp_port', 'smtp_username', 'smtp_password', 'use_tls')
+
+class ImapSettingsSerializer(serializers.ModelSerializer):
+    """Serializer for IMAP settings"""
+    class Meta:
+        model = UserProfile
+        fields = ('imap_server', 'imap_port', 'imap_username', 'imap_password', 'use_imap_ssl')
+
+class UserCompanySerializer(serializers.ModelSerializer):
+    """Serializer for user's company information"""
+    class Meta:
+        model = UserProfile
+        fields = ('company_name', 'company_industry', 'company_position', 'company_size', 'company_website', 'company_linkedin_url', 'company_location', 'company_description')
 
 class UserSerializer(serializers.ModelSerializer):
     """User serializer for registration and profile viewing"""
-    
+    profile = UserProfileSerializer(read_only=True)
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'profile')
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

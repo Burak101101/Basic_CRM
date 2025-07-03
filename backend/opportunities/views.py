@@ -113,7 +113,45 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         }
         
         return Response(response_data)
-    
+
+    @action(detail=True, methods=['post'])
+    def change_status(self, request, pk=None):
+        """
+        Fırsat durumunu değiştir (drag-and-drop için)
+        """
+        try:
+            opportunity = self.get_object()
+            status_id = request.data.get('status_id')
+
+            if not status_id:
+                return Response(
+                    {"error": "status_id gereklidir"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Status'un var olduğunu kontrol et
+            try:
+                new_status = OpportunityStatus.objects.get(id=status_id)
+            except OpportunityStatus.DoesNotExist:
+                return Response(
+                    {"error": "Geçersiz status ID"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Opportunity'nin status'unu güncelle
+            opportunity.status = new_status
+            opportunity.save()
+
+            # Güncellenmiş opportunity'yi döndür
+            serializer = OpportunityDetailSerializer(opportunity)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     @action(detail=False, methods=['get'])
     def company_opportunities(self, request):
         """

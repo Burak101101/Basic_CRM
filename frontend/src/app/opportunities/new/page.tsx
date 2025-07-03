@@ -96,6 +96,27 @@ export default function NewOpportunity() {
     fetchContacts();
   }, [selectedCompanyId, setValue, contactId]);
 
+  // Handle AI-generated proposals from sessionStorage
+  useEffect(() => {
+    const aiProposals = sessionStorage.getItem('aiOpportunityProposals');
+    if (aiProposals) {
+      try {
+        const proposals = JSON.parse(aiProposals);
+        if (proposals && proposals.length > 0) {
+          // Use the first proposal to pre-fill the form
+          const firstProposal = proposals[0];
+          setValue('title', firstProposal.title);
+          setValue('description', firstProposal.description);
+          setValue('value', firstProposal.estimated_value);
+          setValue('priority', firstProposal.priority);
+        }
+        sessionStorage.removeItem('aiOpportunityProposals');
+      } catch (err) {
+        console.error('AI önerilerini parse ederken hata:', err);
+      }
+    }
+  }, [setValue]);
+
   const onSubmit = async (data: OpportunityCreate) => {
     try {
       setError(null);

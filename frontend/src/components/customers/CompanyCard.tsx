@@ -1,4 +1,6 @@
+'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BuildingOfficeIcon, PhoneIcon, EnvelopeIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 import { CompanyList } from '@/types/customer';
 
@@ -7,10 +9,11 @@ interface CompanyCardProps {
 }
 
 export default function CompanyCard({ company }: CompanyCardProps) {
+  const router = useRouter();
   return (
-    <Link 
-      href={`/companies/${company.id}`} 
-      className="block group"
+    <div
+      onClick={() => router.push(`/companies/${company.id}`)}
+      className="cursor-pointer block group"
     >
       <div className="bg-white shadow overflow-hidden rounded-lg hover:shadow-md transition-shadow duration-300">
         <div className="px-4 py-5 sm:px-6 flex justify-between items-start">
@@ -83,7 +86,7 @@ export default function CompanyCard({ company }: CompanyCardProps) {
               <div className="flex items-center space-x-2 pt-2">
                 {company.email && (
                   <Link
-                    href={`/communications/new?company=${company.id}&email=${company.email}&name=${encodeURIComponent(company.name)}`}
+                    href={`/communications/compose?company=${company.id}`}
                     onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                   >
@@ -107,6 +110,6 @@ export default function CompanyCard({ company }: CompanyCardProps) {
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
